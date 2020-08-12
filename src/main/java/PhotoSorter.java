@@ -10,47 +10,51 @@ import com.drew.metadata.Directory;
 import com.drew.metadata.Metadata;
 import com.drew.metadata.exif.ExifSubIFDDirectory;
 
-import static jdk.nashorn.internal.objects.Global.print;
-
 public class PhotoSorter {
     
     static String INPUT_DIRECTORY = "input";
     static String OUTPUT_DIRECTORY = "output";
-
-    // Debugging values
-//    static String INPUT_DIRECTORY = "C:\\Users\\malyn\\IdeaProjects\\JavaPhotoSorter\\input";
-//    static String OUTPUT_DIRECTORY = "C:\\Users\\malyn\\IdeaProjects\\JavaPhotoSorter\\output";
     
     public static void main(String[] args){
-
         ApplyArgs(args);
+        File[] fileList = new File(INPUT_DIRECTORY).listFiles();
 
-        File[] fileList = GetListOfFiles(INPUT_DIRECTORY);
+        if (fileList != null) {
+            System.out.print("Moving " + fileList.length + "files");
 
-        for (File file : fileList){
-            MoveFileToSortedDestination(file);
+            for (File file : fileList){
+                LocalDate fileCreationDate = GetFileCreationDate(file);
+
+                if (!MoveFileToSortedDestination(file, fileCreationDate)){
+                    System.out.println("FAILED: " + file.getAbsolutePath());
+                }
+            }
         }
     }
 
-    private static void MoveFileToSortedDestination(File file) {
-        LocalDate localDate = GetFileCreationDate(file);
-        if(localDate.getYear() > 1950){  // 1900 indicates year not retrieved
-            int year = localDate.getYear();
-            int month = localDate.getMonthValue();
+    private static boolean MoveFileToSortedDestination(File file, LocalDate fileCreationDate) {
+        if(fileCreationDate.getYear() > 1950) {  // 1900 indicates year not retrieved
+            int year = fileCreationDate.getYear();
+            int month = fileCreationDate.getMonthValue();
             String monthString = String.valueOf(month);
-            if(month < 10){
+
+            if (month < 10) {
                 monthString = "0" + monthString;
             }
             String outputPath = OUTPUT_DIRECTORY + "\\" + year + "\\" + monthString;
-            new File(outputPath).mkdirs();
-            outputPath += "\\" + file.getName();
-            boolean renamed = file.renameTo(new File(outputPath));
+
+            if (new File(outputPath).mkdirs()) {
+                outputPath += "\\" + file.getName();
+                return file.renameTo(new File(outputPath));
+            }
         }
+        return false;
     }
 
     private static LocalDate GetFileCreationDate(File file) {
         String fileName = file.getName();
         LocalDate localDate = LocalDate.of(1900, 1, 1);
+
         if(fileName.startsWith("VID")){
             int year = Integer.parseInt(fileName.substring(4, 8));
             int month = Integer.parseInt(fileName.substring(8, 10));
@@ -63,17 +67,10 @@ public class PhotoSorter {
                 Date date = directory.getDate(ExifSubIFDDirectory.TAG_DATETIME_ORIGINAL);
                 return date.toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
             } catch (ImageProcessingException | IOException e) {
-                print(e);
+                System.out.println(e);
             }
         }
         return localDate;
-    }
-
-    private static File[] GetListOfFiles(String inputDirectory) {
-        File file = new File(inputDirectory);
-
-        
-        return file.listFiles();
     }
 
     private static void ApplyArgs(String[] args) {
