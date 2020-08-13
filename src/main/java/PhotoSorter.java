@@ -16,18 +16,21 @@ public class PhotoSorter {
     static String OUTPUT_DIRECTORY = "output";
     
     public static void main(String[] args){
+
         ApplyArgs(args);
         File[] fileList = new File(INPUT_DIRECTORY).listFiles();
 
-        if (fileList != null) {
-            System.out.print("Moving " + fileList.length + "files");
+        if (fileList == null || fileList.length == 0){
+            System.out.println("ERROR: Empty Input Directory " + INPUT_DIRECTORY);
+            return;
+        }
+        System.out.println("Moving " + fileList.length + " files");
 
-            for (File file : fileList){
-                LocalDate fileCreationDate = GetFileCreationDate(file);
+        for (File file : fileList){
+            LocalDate fileCreationDate = GetFileCreationDate(file);
 
-                if (!MoveFileToSortedDestination(file, fileCreationDate)){
-                    System.out.println("FAILED: " + file.getAbsolutePath());
-                }
+            if (!MoveFileToSortedDestination(file, fileCreationDate)){
+                System.out.println("FAILED: " + file.getAbsolutePath());
             }
         }
     }
