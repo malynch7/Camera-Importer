@@ -22,8 +22,9 @@ public class PhotoSorter {
 
         if (fileList == null || fileList.length == 0){
             System.out.println("ERROR: Empty Input Directory " + INPUT_DIRECTORY);
-            return;
+            System.exit(1);
         }
+
         System.out.println("Moving " + fileList.length + " files");
 
         for (File file : fileList){
